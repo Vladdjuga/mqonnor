@@ -1,5 +1,6 @@
 using mqonnor.Application.Abstractions;
 using mqonnor.Application.UseCases.Event;
+using mqonnor.Domain.Primitives;
 using mqonnor.Infra.Mediator;
 
 namespace mqonnor.API.DI;
@@ -16,7 +17,7 @@ public static class MediatorExtensions
 
         public IServiceCollection AddCommandHandlers()
         {
-            services.AddScoped<ICommandHandler<PublishEventCommand>, PublishEventCommandHandler>();
+            services.AddScoped<ICommandHandler<PublishEventCommand,Result>, PublishEventCommandHandler>();
 
             return services;
         }

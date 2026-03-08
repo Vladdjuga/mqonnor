@@ -14,8 +14,15 @@ public sealed class PublishEventCommandHandler(
 {
     public async Task<Result> HandleAsync(PublishEventCommand command, CancellationToken cancellationToken = default)
     {
-        var @event = mapper.Map(command.Dto);
-        await eventBus.PublishAsync(@event, cancellationToken);
-        return Result.Success();
+        try
+        {
+            var @event = mapper.Map(command.Dto);
+            await eventBus.PublishAsync(@event, cancellationToken);
+            return Result.Success();
+        }
+        catch (OperationCanceledException)
+        {
+            return Result.Failure("Publish was cancelled.");
+        }
     }
 }
