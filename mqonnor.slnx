@@ -4,5 +4,6 @@
     <Project Path="src/mqonnor.Application/mqonnor.Application.csproj" />
     <Project Path="src/mqonnor.Domain/mqonnor.Domain.csproj" />
     <Project Path="src/mqonnor.Infra/mqonnor.Infra.csproj" />
+    <Project Path="src/mqonnor.Tests/mqonnor.Tests.csproj" />
   </Folder>
 </Solution>
