@@ -8,6 +8,8 @@ builder.Services.AddControllers();
 builder.Services.AddCommandHandlers();
 builder.Services.AddMediator();
 builder.Services.AddMappers();
+builder.Services.AddWorkers();
+builder.Services.AddPersistence(builder.Configuration);
 
 var app = builder.Build();
 
