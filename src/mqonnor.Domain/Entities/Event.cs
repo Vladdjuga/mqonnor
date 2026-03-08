@@ -1,4 +1,4 @@
-namespace mqonnor.Domain;
+namespace mqonnor.Domain.Entities;
 
 public class Event
 {
