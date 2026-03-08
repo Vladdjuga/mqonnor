@@ -1,6 +1,0 @@
-@mqonnor.API_HostAddress = http://localhost:5027
-
-GET {{mqonnor.API_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
