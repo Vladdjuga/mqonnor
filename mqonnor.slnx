@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/mqonnor.API/mqonnor.API.csproj" />
+    <Project Path="src/mqonnor.Application/mqonnor.Application.csproj" />
+    <Project Path="src/mqonnor.Domain/mqonnor.Domain.csproj" />
+    <Project Path="src/mqonnor.Infra/mqonnor.Infra.csproj" />
+  </Folder>
+</Solution>
