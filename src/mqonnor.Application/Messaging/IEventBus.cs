@@ -5,20 +5,20 @@ namespace mqonnor.Application.Messaging;
 public interface IEventBus
 {
     /// <summary>
-    /// Publishes an event into the next available slot of the ring buffer.
+    /// Publishes an event into the channel.
+    /// Awaits if the bounded channel is full, providing natural backpressure.
     /// </summary>
-    void Publish(Event @event);
+    ValueTask PublishAsync(Event @event, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Attempts to consume the next single event from the ring buffer.
-    /// Returns false if no events are available.
+    /// Awaits the next available event from the channel.
+    /// Workers will suspend here until a new event is written.
     /// </summary>
-    bool TryConsume(out Event? @event);
+    ValueTask<Event> ConsumeAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Attempts to consume a batch of available events as a zero-copy span
-    /// over the ring buffer's backing Event[] store.
-    /// Returns an empty span if no events are available.
+    /// Returns an async stream of all events as they arrive.
+    /// Intended for long-running workers that process events continuously.
     /// </summary>
-    ReadOnlySpan<Event> TryConsumeBatch();
+    IAsyncEnumerable<Event> ConsumeAllAsync(CancellationToken cancellationToken = default);
 }

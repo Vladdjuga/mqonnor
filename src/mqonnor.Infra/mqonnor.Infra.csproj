@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\mqonnor.Application\mqonnor.Application.csproj" />
+    <ProjectReference Include="..\mqonnor.Domain\mqonnor.Domain.csproj" />
   </ItemGroup>
 
 </Project>

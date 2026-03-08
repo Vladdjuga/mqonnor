@@ -1,6 +1,10 @@
+using mqonnor.Domain.Primitives;
+
 namespace mqonnor.Application.Abstractions;
 
-public interface ICommandHandler<in TCommand> where TCommand : ICommand
+public interface ICommandHandler<in TCommand, TResult>
+    where TCommand : ICommand
+    where TResult : Result
 {
-    ValueTask HandleAsync(TCommand command, CancellationToken cancellationToken = default);
+    Task<TResult> HandleAsync(TCommand command, CancellationToken cancellationToken = default);
 }
