@@ -2,12 +2,14 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using mqonnor.Application.Messaging;
 using mqonnor.Domain.Entities;
+using mqonnor.Domain.Repositories;
 
 namespace mqonnor.Infra.Workers;
 
 public sealed class EventConsumerWorker(
     IEventBus eventBus,
-    ILogger<EventConsumerWorker> logger) : BackgroundService
+    ILogger<EventConsumerWorker> logger,
+    IEventRepository repository) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -34,9 +36,8 @@ public sealed class EventConsumerWorker(
         logger.LogInformation("EventConsumerWorker stopped.");
     }
 
-    private static Task ProcessAsync(Event @event, CancellationToken cancellationToken)
+    private async Task ProcessAsync(Event @event, CancellationToken cancellationToken)
     {
-        // TODO: dispatch event to the appropriate handler
-        return Task.CompletedTask;
+        await repository.AddAsync(@event, cancellationToken);
     }
 }
