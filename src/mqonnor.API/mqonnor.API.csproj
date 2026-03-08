@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\mqonnor.Application\mqonnor.Application.csproj" />
+    <ProjectReference Include="..\mqonnor.Infra\mqonnor.Infra.csproj" />
   </ItemGroup>
 
 </Project>

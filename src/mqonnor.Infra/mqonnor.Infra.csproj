@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\mqonnor.Application\mqonnor.Application.csproj" />
+  </ItemGroup>
+
 </Project>

@@ -8,7 +8,7 @@ public static class MapperExtensions
 {
     public static IServiceCollection AddMappers(this IServiceCollection services)
     {
-        services.AddScoped<IMapper<PublishEventDto, Event>, EventMapper>();
+        services.AddSingleton<IMapper<PublishEventDto, Event>, EventMapper>();
 
         return services;
     }
