@@ -47,8 +47,7 @@ public abstract class EventConsumerWorker(
         var eventList = events as IReadOnlyList<Event> ?? events.ToList();
         await repository.AddManyAsync(eventList, cancellationToken);
         Logger.LogInformation("[DB] Batch of {Count} events saved.", eventList.Count);
-        foreach (var @event in eventList)
-            await notificationService.BroadcastEventAsync(@event, cancellationToken);
+        await Task.WhenAll(eventList.Select(e => notificationService.BroadcastEventAsync(e, cancellationToken)));
         Logger.LogInformation("[SignalR] Batch of {Count} events broadcast to clients.", eventList.Count);
     }
 }
