@@ -10,15 +10,22 @@ public static class WorkerExtensions
     {
         services.Configure<EventConsumerOptions>(configuration.GetSection(EventConsumerOptions.SectionName));
 
-        var mode = configuration
+        var options = configuration
             .GetSection(EventConsumerOptions.SectionName)
-            .Get<EventConsumerOptions>()?.Mode ?? EventConsumerMode.All;
+            .Get<EventConsumerOptions>() ?? new EventConsumerOptions();
 
-        return mode switch
+        var count = Math.Max(1, options.WorkerCount);
+
+        for (var i = 0; i < count; i++)
         {
-            EventConsumerMode.One   => services.AddHostedService<OneByOneEventConsumerWorker>(),
-            EventConsumerMode.Batch => services.AddHostedService<BatchEventConsumerWorker>(),
-            _                       => services.AddHostedService<AllEventConsumerWorker>(),
-        };
+            _ = options.Mode switch
+            {
+                EventConsumerMode.One   => services.AddHostedService<OneByOneEventConsumerWorker>(),
+                EventConsumerMode.Batch => services.AddHostedService<BatchEventConsumerWorker>(),
+                _                       => services.AddHostedService<AllEventConsumerWorker>(),
+            };
+        }
+
+        return services;
     }
 }

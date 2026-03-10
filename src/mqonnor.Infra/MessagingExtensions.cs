@@ -10,7 +10,7 @@ public static class MessagingExtensions
 {
     public static IServiceCollection AddInfrastructureMessaging(
         this IServiceCollection services,
-        int channelCapacity = 4096)
+        int channelCapacity = 65536)
     {
         services.AddSingleton(_ => Channel.CreateBounded<Event>(
             new BoundedChannelOptions(channelCapacity)

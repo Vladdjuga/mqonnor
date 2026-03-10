@@ -7,5 +7,11 @@ public sealed class EventConsumerOptions
     public EventConsumerMode Mode { get; init; } = EventConsumerMode.All;
 
     /// <summary>Maximum number of events per iteration. Only used when <see cref="Mode"/> is <see cref="EventConsumerMode.Batch"/>.</summary>
-    public int BatchSize { get; init; } = 32;
+    public int BatchSize { get; init; } = 256;
+
+    /// <summary>Bounded capacity of the in-process Channel&lt;Event&gt;. Higher values reduce backpressure under burst load.</summary>
+    public int ChannelCapacity { get; init; } = 65536;
+
+    /// <summary>Number of concurrent consumer worker instances. Each worker drains the shared channel independently.</summary>
+    public int WorkerCount { get; init; } = 1;
 }
