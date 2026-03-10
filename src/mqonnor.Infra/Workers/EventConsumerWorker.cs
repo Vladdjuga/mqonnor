@@ -6,43 +6,34 @@ using mqonnor.Domain.Repositories;
 
 namespace mqonnor.Infra.Workers;
 
-public sealed class EventConsumerWorker(
+public abstract class EventConsumerWorker(
     IEventBus eventBus,
     ILogger<EventConsumerWorker> logger,
     IEventRepository repository) : BackgroundService
 {
+    protected IEventBus EventBus { get; } = eventBus;
+    protected ILogger<EventConsumerWorker> Logger { get; } = logger;
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        logger.LogInformation("EventConsumerWorker started.");
+        Logger.LogInformation("{Worker} started.", GetType().Name);
         try
         {
-            await foreach (var @event in eventBus.ConsumeAllAsync(stoppingToken))
-            {
-                try
-                {
-                    await ProcessAsync(@event, stoppingToken);
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError(ex, "Failed to process event {EventId}.", @event.Id);
-                }
-            }
+            await RunLoopAsync(stoppingToken);
         }
         catch (OperationCanceledException)
         {
-            logger.LogInformation("EventConsumerWorker stopping — cancellation requested.");
+            Logger.LogInformation("{Worker} stopping — cancellation requested.", GetType().Name);
         }
 
-        logger.LogInformation("EventConsumerWorker stopped.");
+        Logger.LogInformation("{Worker} stopped.", GetType().Name);
     }
 
-    private async Task ProcessAsync(Event @event, CancellationToken cancellationToken)
-    {
-        await repository.AddAsync(@event, cancellationToken);
-    }
+    protected abstract Task RunLoopAsync(CancellationToken stoppingToken);
 
-    private async Task ProcessAllAsync(IEnumerable<Event> events, CancellationToken cancellationToken)
-    {
-        await repository.AddManyAsync(events, cancellationToken);
-    }
+    protected Task ProcessAsync(Event @event, CancellationToken cancellationToken)
+        => repository.AddAsync(@event, cancellationToken);
+
+    protected Task ProcessManyAsync(IEnumerable<Event> events, CancellationToken cancellationToken)
+        => repository.AddManyAsync(events, cancellationToken);
 }

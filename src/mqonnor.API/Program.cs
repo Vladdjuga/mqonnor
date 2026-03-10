@@ -10,7 +10,7 @@ builder.Services.AddSignalRHub();
 builder.Services.AddCommandHandlers();
 builder.Services.AddMediator();
 builder.Services.AddMappers();
-builder.Services.AddWorkers();
+builder.Services.AddWorkers(builder.Configuration);
 builder.Services.AddPersistence(builder.Configuration);
 
 var app = builder.Build();
