@@ -36,10 +36,10 @@ public abstract class EventConsumerWorker(
     protected async Task ProcessAsync(Event @event, CancellationToken cancellationToken)
     {
         await repository.AddAsync(@event, cancellationToken);
-        Logger.LogInformation("[DB] Event {EventId} saved — source={Source} encoding={Encoding} bytes={Bytes}",
+        Logger.LogDebug("[DB] Event {EventId} saved — source={Source} encoding={Encoding} bytes={Bytes}",
             @event.Id, @event.Metainfo.Source, @event.Metainfo.Encoding, @event.Metainfo.Length);
         await notificationService.BroadcastEventAsync(@event, cancellationToken);
-        Logger.LogInformation("[SignalR] Event {EventId} broadcast to clients.", @event.Id);
+        Logger.LogDebug("[SignalR] Event {EventId} broadcast to clients.", @event.Id);
     }
 
     protected async Task ProcessManyAsync(IEnumerable<Event> events, CancellationToken cancellationToken)

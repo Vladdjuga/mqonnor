@@ -12,10 +12,20 @@ public static class ReportRenderer
         var cdfData = BuildCdfData(report.LatenciesMs);
 
         var minTs = report.ThroughputBuckets.Count > 0 ? report.ThroughputBuckets[0].BucketMs : 0;
-        var throughputLabels = report.ThroughputBuckets
-            .Select(b => $"+{(b.BucketMs - minTs) / 1000.0:F1}s")
+
+        // Merge 100ms buckets into 1s buckets, then downsample to max 300 points for a clean trend line
+        var secondBuckets = report.ThroughputBuckets
+            .GroupBy(b => (b.BucketMs - minTs) / 1000)
+            .Select(g => (SecondOffset: g.Key, EvPerSec: g.Sum(x => x.Count)))
+            .OrderBy(x => x.SecondOffset)
             .ToList();
-        var throughputData = report.ThroughputBuckets.Select(b => b.Count * 10).ToList(); // per-sec rate
+
+        const int maxTrendPoints = 300;
+        var trendStep = Math.Max(1, secondBuckets.Count / maxTrendPoints);
+        var trendBuckets = secondBuckets.Where((_, i) => i % trendStep == 0).ToList();
+
+        var throughputLabels = trendBuckets.Select(b => $"+{b.SecondOffset}s").ToList();
+        var throughputData = trendBuckets.Select(b => b.EvPerSec).ToList();
 
         var html = $$"""
 <!DOCTYPE html>
@@ -102,20 +112,32 @@ new Chart(document.getElementById('throughput'), {
             .ToList();
     }
 
+    // O(n) single pass — avoids O(n*buckets) for large datasets
     private static List<int> BuildHistogramData(IReadOnlyList<double> sorted, List<string> labels)
     {
         if (sorted.Count == 0) return [];
         var max = sorted[^1];
         var size = Math.Max(1, (int)Math.Ceiling(max / labels.Count));
-        return labels.Select((_, i) =>
-            sorted.Count(v => v >= i * size && v < (i + 1) * size)).ToList();
+        var counts = new int[labels.Count];
+        foreach (var v in sorted)
+        {
+            var idx = Math.Min((int)(v / size), labels.Count - 1);
+            counts[idx]++;
+        }
+        return [.. counts];
     }
 
+    // Downsample to at most 200 percentile points instead of one per event
     private static List<object> BuildCdfData(IReadOnlyList<double> sorted)
     {
         if (sorted.Count == 0) return [];
-        return sorted
-            .Select((v, i) => (object)new { x = (int)v, y = Math.Round((i + 1.0) / sorted.Count * 100, 1) })
-            .ToList();
+        const int maxPoints = 200;
+        var step = Math.Max(1, sorted.Count / maxPoints);
+        var points = new List<object>(maxPoints + 1);
+        for (var i = 0; i < sorted.Count; i += step)
+            points.Add(new { x = (int)sorted[i], y = Math.Round((i + 1.0) / sorted.Count * 100, 1) });
+        if ((sorted.Count - 1) % step != 0)
+            points.Add(new { x = (int)sorted[^1], y = 100.0 });
+        return points;
     }
 }
