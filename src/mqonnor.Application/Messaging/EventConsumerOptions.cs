@@ -14,4 +14,7 @@ public sealed class EventConsumerOptions
 
     /// <summary>Number of concurrent consumer worker instances. Each worker drains the shared channel independently.</summary>
     public int WorkerCount { get; init; } = 1;
+
+    /// <summary>Number of parallel DB persistence workers. Each one independently drains the write-behind channel into MongoDB.</summary>
+    public int DbWorkerCount { get; init; } = 2;
 }

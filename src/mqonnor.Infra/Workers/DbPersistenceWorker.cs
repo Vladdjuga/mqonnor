@@ -13,11 +13,12 @@ namespace mqonnor.Infra.Workers;
 public sealed class DbPersistenceWorker(
     Channel<IReadOnlyList<Event>> dbChannel,
     IEventRepository repository,
-    ILogger<DbPersistenceWorker> logger) : BackgroundService
+    ILogger<DbPersistenceWorker> logger,
+    int workerId = 0) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        logger.LogInformation("DbPersistenceWorker started.");
+        logger.LogInformation("DbPersistenceWorker [{Id}] started.", workerId);
         try
         {
             await foreach (var batch in dbChannel.Reader.ReadAllAsync(stoppingToken))
@@ -28,12 +29,12 @@ public sealed class DbPersistenceWorker(
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {
-                    logger.LogError(ex, "[DB] Failed to persist batch of {Count} events.", batch.Count);
+                    logger.LogError(ex, "[DB/{Id}] Failed to persist batch of {Count} events.", workerId, batch.Count);
                 }
             }
         }
         catch (OperationCanceledException) { }
 
-        logger.LogInformation("DbPersistenceWorker stopped.");
+        logger.LogInformation("DbPersistenceWorker [{Id}] stopped.", workerId);
     }
 }

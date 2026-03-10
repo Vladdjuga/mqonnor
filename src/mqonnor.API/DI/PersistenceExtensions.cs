@@ -1,6 +1,8 @@
 using System.Threading.Channels;
+using Microsoft.Extensions.Logging;
 using mqonnor.Application.Messaging;
 using mqonnor.Domain.Entities;
+using mqonnor.Domain.Repositories;
 using mqonnor.Infra;
 using mqonnor.Infra.Workers;
 
@@ -18,16 +20,34 @@ public static class PersistenceExtensions
 
         services.AddInfrastructureMessaging(capacity);
 
-        // Write-behind channel for DB persistence — decouples MongoDB from the broadcast hot path.
-        // Capacity = 1024 batches × 512 events = ~500k events buffered.
-        services.AddSingleton(_ => Channel.CreateBounded<IReadOnlyList<Event>>(
-            new BoundedChannelOptions(1024)
+        var consumerOptions = configuration
+            .GetSection(EventConsumerOptions.SectionName)
+            .Get<EventConsumerOptions>() ?? new EventConsumerOptions();
+
+        var dbWorkerCount = Math.Max(1, consumerOptions.DbWorkerCount);
+
+        // Write-behind channel for DB persistence — UNBOUNDED so broadcast workers are never
+        // blocked waiting for MongoDB. The main event channel (ChannelCapacity) already provides
+        // ingest flow control. Bounding this channel caused broadcast workers to stall when
+        // MongoDB write throughput fell below the ingest rate, filling the main channel and
+        // blocking producers — the root cause of tail latency spikes.
+        services.AddSingleton(_ => Channel.CreateUnbounded<IReadOnlyList<Event>>(
+            new UnboundedChannelOptions
             {
-                FullMode = BoundedChannelFullMode.Wait,
-                SingleReader = true,
+                SingleReader = dbWorkerCount == 1,
                 SingleWriter = false
             }));
-        services.AddHostedService<DbPersistenceWorker>();
+
+        for (var i = 0; i < dbWorkerCount; i++)
+        {
+            var id = i;
+            services.AddHostedService(sp =>
+                new DbPersistenceWorker(
+                    sp.GetRequiredService<Channel<IReadOnlyList<Event>>>(),
+                    sp.GetRequiredService<IEventRepository>(),
+                    sp.GetRequiredService<ILogger<DbPersistenceWorker>>(),
+                    id));
+        }
 
         return services;
     }
