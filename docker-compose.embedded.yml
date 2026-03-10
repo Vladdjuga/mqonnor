@@ -1,0 +1,17 @@
+# Single-container deployment: API + embedded MongoDB managed by supervisord.
+# Use when you want a fully self-contained image with no external dependencies.
+#
+# docker compose -f docker-compose.embedded.yml up --build
+
+services:
+  mqonnor:
+    build:
+      context: .
+      dockerfile: Dockerfile.embedded
+    ports:
+      - "8080:8080"
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  mongo_data:
