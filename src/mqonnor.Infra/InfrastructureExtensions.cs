@@ -23,17 +23,17 @@ public static class InfrastructureExtensions
 
         services.AddSingleton<IMongoClient>(_ => new MongoClient(connectionString));
 
-        services.AddScoped(sp =>
+        services.AddSingleton(sp =>
         {
             var client = sp.GetRequiredService<IMongoClient>();
             var database = client.GetDatabase(databaseName);
             return database.GetCollection<EventDocument>("events");
         });
 
-        services.AddScoped<IEventRepository, EventRepository>();
+        services.AddSingleton<IEventRepository, EventRepository>();
 
-        services.AddScoped<IMapper<Event, EventDocument>, EventToDocumentMapper>();
-        services.AddScoped<IMapper<EventDocument, Event>, EventDocumentToDomainMapper>();
+        services.AddSingleton<IMapper<Event, EventDocument>, EventToDocumentMapper>();
+        services.AddSingleton<IMapper<EventDocument, Event>, EventDocumentToDomainMapper>();
 
         return services;
     }

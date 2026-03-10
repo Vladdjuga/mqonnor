@@ -25,6 +25,26 @@ services:
     depends_on:
       mongo:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "bash", "-c", "echo > /dev/tcp/localhost/8080"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 15s
+
+  stress-tester:
+    build:
+      context: .
+      dockerfile: Dockerfile.stresstester
+    depends_on:
+      mqonnor:
+        condition: service_healthy
+    restart: "no"
+    volumes:
+      - ./stress-reports:/reports
+    environment:
+      RUN_ID: ${RUN_ID:-latest}
+    entrypoint: ["/bin/sh", "-c", "mkdir -p /reports/$${RUN_ID} && dotnet mqonnor.StressTester.dll --url http://mqonnor:8080/hubs/events --report /reports/$${RUN_ID}/report.html"]
 
 volumes:
   mongo_data:

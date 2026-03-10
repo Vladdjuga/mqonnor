@@ -7,7 +7,7 @@ public static class NotificationExtensions
 {
     public static IServiceCollection AddNotifications(this IServiceCollection services)
     {
-        services.AddScoped<INotificationService, SignalRNotificationService>();
+        services.AddSingleton<INotificationService, SignalRNotificationService>();
         return services;
     }
 }
