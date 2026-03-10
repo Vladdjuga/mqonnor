@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using mqonnor.Application.Messaging;
+using mqonnor.Application.Services;
 using mqonnor.Domain.Repositories;
 
 namespace mqonnor.Infra.Workers;
@@ -7,7 +8,8 @@ namespace mqonnor.Infra.Workers;
 public sealed class AllEventConsumerWorker(
     IEventBus eventBus,
     ILogger<EventConsumerWorker> logger,
-    IEventRepository repository) : EventConsumerWorker(eventBus, logger, repository)
+    IEventRepository repository,
+    INotificationService notificationService) : EventConsumerWorker(eventBus, logger, repository, notificationService)
 {
     protected override async Task RunLoopAsync(CancellationToken stoppingToken)
     {

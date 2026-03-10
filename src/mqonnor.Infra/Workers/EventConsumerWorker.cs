@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using mqonnor.Application.Messaging;
+using mqonnor.Application.Services;
 using mqonnor.Domain.Entities;
 using mqonnor.Domain.Repositories;
 
@@ -9,7 +10,8 @@ namespace mqonnor.Infra.Workers;
 public abstract class EventConsumerWorker(
     IEventBus eventBus,
     ILogger<EventConsumerWorker> logger,
-    IEventRepository repository) : BackgroundService
+    IEventRepository repository,
+    INotificationService notificationService) : BackgroundService
 {
     protected IEventBus EventBus { get; } = eventBus;
     protected ILogger<EventConsumerWorker> Logger { get; } = logger;
@@ -31,9 +33,17 @@ public abstract class EventConsumerWorker(
 
     protected abstract Task RunLoopAsync(CancellationToken stoppingToken);
 
-    protected Task ProcessAsync(Event @event, CancellationToken cancellationToken)
-        => repository.AddAsync(@event, cancellationToken);
+    protected async Task ProcessAsync(Event @event, CancellationToken cancellationToken)
+    {
+        await repository.AddAsync(@event, cancellationToken);
+        await notificationService.BroadcastEventAsync(@event, cancellationToken);
+    }
 
-    protected Task ProcessManyAsync(IEnumerable<Event> events, CancellationToken cancellationToken)
-        => repository.AddManyAsync(events, cancellationToken);
+    protected async Task ProcessManyAsync(IEnumerable<Event> events, CancellationToken cancellationToken)
+    {
+        var eventList = events as IReadOnlyList<Event> ?? events.ToList();
+        await repository.AddManyAsync(eventList, cancellationToken);
+        foreach (var @event in eventList)
+            await notificationService.BroadcastEventAsync(@event, cancellationToken);
+    }
 }

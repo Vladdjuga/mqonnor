@@ -17,9 +17,6 @@ public sealed class EventHub(IMediator mediator) : Hub<IEventHubClient>
         if (result.IsFailure)
         {
             await Clients.Caller.Error(result.Error!);
-            return;
         }
-
-        await Clients.All.Notify(dto);
     }
 }

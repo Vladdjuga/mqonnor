@@ -12,6 +12,7 @@ builder.Services.AddMediator();
 builder.Services.AddMappers();
 builder.Services.AddWorkers(builder.Configuration);
 builder.Services.AddPersistence(builder.Configuration);
+builder.Services.AddNotifications();
 
 var app = builder.Build();
 
