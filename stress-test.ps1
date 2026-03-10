@@ -32,9 +32,13 @@ if ($ctx -ne 'desktop-linux') {
 Write-Host ">> Tearing down previous stack..."
 docker compose down --remove-orphans
 
-# --- build & start the full stack (mongo + API + stress-tester) ---
+# --- build & start the full stack (mongo + API + stress-tester) in background ---
 Write-Host ">> Building and starting stack (run: $($env:RUN_ID))..."
-docker compose up --build --abort-on-container-exit --exit-code-from stress-tester
+docker compose up --build -d
+
+# --- wait for stress-tester to finish ---
+Write-Host ">> Waiting for stress-tester to complete..."
+docker compose wait stress-tester | Out-Null
 
 # --- show stress-tester output cleanly ---
 Write-Host ""
@@ -44,9 +48,5 @@ docker compose logs stress-tester
 # --- report location ---
 Write-Host ""
 Write-Host ">> Report saved -> $ReportDir\report.html"
-Write-Host ">> Done. API is still up at http://localhost:$Port"
-Write-Host "   Run 'docker compose down' to stop everything."
-
-Write-Host ""
 Write-Host ">> Done. API is still up at http://localhost:$Port"
 Write-Host "   Run 'docker compose down' to stop everything."

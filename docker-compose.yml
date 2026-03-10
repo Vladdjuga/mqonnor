@@ -44,7 +44,7 @@ services:
       - ./stress-reports:/reports
     environment:
       RUN_ID: ${RUN_ID:-latest}
-    entrypoint: ["/bin/sh", "-c", "mkdir -p /reports/$${RUN_ID} && dotnet mqonnor.StressTester.dll --url http://mqonnor:8080/hubs/events --report /reports/$${RUN_ID}/report.html"]
+    entrypoint: ["/bin/sh", "-c", "mkdir -p /reports/$${RUN_ID} && dotnet mqonnor.StressTester.dll --url http://mqonnor:8080/hubs/events --events 1000000 --report /reports/$${RUN_ID}/report.html"]
 
 volumes:
   mongo_data:
