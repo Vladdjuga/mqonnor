@@ -121,7 +121,7 @@ new Chart(document.getElementById('throughput'), {
         var counts = new int[labels.Count];
         foreach (var v in sorted)
         {
-            var idx = Math.Min((int)(v / size), labels.Count - 1);
+            var idx = Math.Clamp((int)(v / size), 0, labels.Count - 1);
             counts[idx]++;
         }
         return [.. counts];

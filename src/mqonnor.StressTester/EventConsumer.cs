@@ -37,6 +37,27 @@ public sealed class EventConsumer(StressOptions options)
             }
         });
 
+        _connection.On<JsonElement>("NotifyBatch", batch =>
+        {
+            var receivedAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            foreach (var dto in batch.EnumerateArray())
+            {
+                try
+                {
+                    var payload = dto.GetProperty("payload");
+                    if (payload.TryGetProperty("correlationId", out var cidEl) &&
+                        cidEl.TryGetGuid(out var correlationId))
+                    {
+                        Received[correlationId] = receivedAt;
+                    }
+                }
+                catch
+                {
+                    // Non-stress-tester event or unexpected shape — ignore
+                }
+            }
+        });
+
         await _connection.StartAsync(ct);
     }
 

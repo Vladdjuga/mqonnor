@@ -1,6 +1,8 @@
+using System.Threading.Channels;
 using Microsoft.Extensions.Logging;
 using mqonnor.Application.Messaging;
 using mqonnor.Application.Services;
+using mqonnor.Domain.Entities;
 using mqonnor.Domain.Repositories;
 
 namespace mqonnor.Infra.Workers;
@@ -9,7 +11,8 @@ public sealed class AllEventConsumerWorker(
     IEventBus eventBus,
     ILogger<EventConsumerWorker> logger,
     IEventRepository repository,
-    INotificationService notificationService) : EventConsumerWorker(eventBus, logger, repository, notificationService)
+    INotificationService notificationService,
+    Channel<IReadOnlyList<Event>> dbChannel) : EventConsumerWorker(eventBus, logger, repository, notificationService, dbChannel)
 {
     protected override async Task RunLoopAsync(CancellationToken stoppingToken)
     {

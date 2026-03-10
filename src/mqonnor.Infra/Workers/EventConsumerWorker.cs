@@ -1,3 +1,4 @@
+using System.Threading.Channels;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using mqonnor.Application.Messaging;
@@ -11,7 +12,8 @@ public abstract class EventConsumerWorker(
     IEventBus eventBus,
     ILogger<EventConsumerWorker> logger,
     IEventRepository repository,
-    INotificationService notificationService) : BackgroundService
+    INotificationService notificationService,
+    Channel<IReadOnlyList<Event>> dbChannel) : BackgroundService
 {
     protected IEventBus EventBus { get; } = eventBus;
     protected ILogger<EventConsumerWorker> Logger { get; } = logger;
@@ -45,9 +47,10 @@ public abstract class EventConsumerWorker(
     protected async Task ProcessManyAsync(IEnumerable<Event> events, CancellationToken cancellationToken)
     {
         var eventList = events as IReadOnlyList<Event> ?? events.ToList();
-        await repository.AddManyAsync(eventList, cancellationToken);
-        Logger.LogInformation("[DB] Batch of {Count} events saved.", eventList.Count);
-        await Task.WhenAll(eventList.Select(e => notificationService.BroadcastEventAsync(e, cancellationToken)));
-        Logger.LogInformation("[SignalR] Batch of {Count} events broadcast to clients.", eventList.Count);
+        if (eventList.Count == 0) return;
+        // Broadcast immediately — never blocked by MongoDB
+        await notificationService.BroadcastManyAsync(eventList, cancellationToken);
+        // Hand off to write-behind channel — DbPersistenceWorker drains independently
+        await dbChannel.Writer.WriteAsync(eventList, cancellationToken);
     }
 }

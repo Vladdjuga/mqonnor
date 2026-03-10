@@ -33,6 +33,7 @@ public class SignalRNotificationServiceTests
         _hubContext.Clients.Returns(_hubClients);
         _hubClients.All.Returns(_allClients);
         _allClients.Notify(Arg.Any<BroadcastEventDto>()).Returns(Task.CompletedTask);
+        _allClients.NotifyBatch(Arg.Any<IReadOnlyList<BroadcastEventDto>>()).Returns(Task.CompletedTask);
         _mapper.Map(Arg.Any<Event>()).Returns(DummyDto);
         _service = new SignalRNotificationService(_hubContext, _mapper);
     }
@@ -58,5 +59,25 @@ public class SignalRNotificationServiceTests
         await _service.BroadcastEventAsync(@event);
 
         await _allClients.Received(1).Notify(DummyDto);
+    }
+
+    [Fact]
+    public async Task BroadcastManyAsync_MapsAllEvents()
+    {
+        var events = new[] { MakeEvent(), MakeEvent(), MakeEvent() };
+
+        await _service.BroadcastManyAsync(events);
+
+        _mapper.Received(3).Map(Arg.Any<Event>());
+    }
+
+    [Fact]
+    public async Task BroadcastManyAsync_CallsNotifyBatchOnce()
+    {
+        var events = new[] { MakeEvent(), MakeEvent() };
+
+        await _service.BroadcastManyAsync(events);
+
+        await _allClients.Received(1).NotifyBatch(Arg.Any<IReadOnlyList<BroadcastEventDto>>());
     }
 }

@@ -13,4 +13,7 @@ public sealed class SignalRNotificationService(
 {
     public Task BroadcastEventAsync(Event @event, CancellationToken cancellationToken = default)
         => hubContext.Clients.All.Notify(mapper.Map(@event));
+
+    public Task BroadcastManyAsync(IReadOnlyList<Event> events, CancellationToken cancellationToken = default)
+        => hubContext.Clients.All.NotifyBatch(events.Select(mapper.Map).ToList());
 }

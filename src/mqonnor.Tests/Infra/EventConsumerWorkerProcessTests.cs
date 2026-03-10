@@ -1,3 +1,4 @@
+using System.Threading.Channels;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using mqonnor.Application.Messaging;
@@ -21,7 +22,8 @@ public class EventConsumerWorkerProcessTests
             Substitute.For<IEventBus>(),
             NullLogger<EventConsumerWorker>.Instance,
             _repository,
-            _notificationService);
+            _notificationService,
+            Channel.CreateUnbounded<IReadOnlyList<Event>>());
     }
 
     private static Event MakeEvent() =>
@@ -48,26 +50,34 @@ public class EventConsumerWorkerProcessTests
     }
 
     [Fact]
-    public async Task ProcessManyAsync_PersistsBatch()
+    public async Task ProcessManyAsync_EnqueuesBatchToDbChannel()
     {
+        var dbChannel = Channel.CreateUnbounded<IReadOnlyList<Event>>();
+        var worker = new TestWorker(
+            Substitute.For<IEventBus>(),
+            NullLogger<EventConsumerWorker>.Instance,
+            _repository,
+            _notificationService,
+            dbChannel);
         var events = Enumerable.Range(0, 3).Select(_ => MakeEvent()).ToList();
 
-        await _worker.ExecProcessManyAsync(events);
+        await worker.ExecProcessManyAsync(events);
 
-        await _repository.Received(1).AddManyAsync(
-            Arg.Is<IEnumerable<Event>>(e => e.SequenceEqual(events)),
-            Arg.Any<CancellationToken>());
+        dbChannel.Reader.TryRead(out var enqueuedBatch);
+        Assert.NotNull(enqueuedBatch);
+        Assert.True(enqueuedBatch.SequenceEqual(events));
     }
 
     [Fact]
-    public async Task ProcessManyAsync_BroadcastsEachEvent()
+    public async Task ProcessManyAsync_BroadcastsViaBroadcastMany()
     {
         var events = Enumerable.Range(0, 3).Select(_ => MakeEvent()).ToList();
 
         await _worker.ExecProcessManyAsync(events);
 
-        foreach (var @event in events)
-            await _notificationService.Received(1).BroadcastEventAsync(@event, Arg.Any<CancellationToken>());
+        await _notificationService.Received(1).BroadcastManyAsync(
+            Arg.Is<IReadOnlyList<Event>>(e => e.SequenceEqual(events)),
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -75,15 +85,16 @@ public class EventConsumerWorkerProcessTests
     {
         await _worker.ExecProcessManyAsync([]);
 
-        await _notificationService.DidNotReceive().BroadcastEventAsync(Arg.Any<Event>(), Arg.Any<CancellationToken>());
+        await _notificationService.DidNotReceive().BroadcastManyAsync(Arg.Any<IReadOnlyList<Event>>(), Arg.Any<CancellationToken>());
     }
 
     private sealed class TestWorker(
         IEventBus eventBus,
         ILogger<EventConsumerWorker> logger,
         IEventRepository repository,
-        INotificationService notificationService)
-        : EventConsumerWorker(eventBus, logger, repository, notificationService)
+        INotificationService notificationService,
+        Channel<IReadOnlyList<Event>> dbChannel)
+        : EventConsumerWorker(eventBus, logger, repository, notificationService, dbChannel)
     {
         protected override Task RunLoopAsync(CancellationToken stoppingToken) => Task.CompletedTask;
 

@@ -1,7 +1,9 @@
+using System.Threading.Channels;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using mqonnor.Application.Messaging;
 using mqonnor.Application.Services;
+using mqonnor.Domain.Entities;
 using mqonnor.Domain.Repositories;
 
 namespace mqonnor.Infra.Workers;
@@ -11,7 +13,8 @@ public sealed class BatchEventConsumerWorker(
     ILogger<EventConsumerWorker> logger,
     IEventRepository repository,
     INotificationService notificationService,
-    IOptions<EventConsumerOptions> options) : EventConsumerWorker(eventBus, logger, repository, notificationService)
+    Channel<IReadOnlyList<Event>> dbChannel,
+    IOptions<EventConsumerOptions> options) : EventConsumerWorker(eventBus, logger, repository, notificationService, dbChannel)
 {
     private readonly int _batchSize = options.Value.BatchSize;
 
