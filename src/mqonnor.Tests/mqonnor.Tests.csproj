@@ -20,9 +20,14 @@
     </ItemGroup>
 
     <ItemGroup>
+      <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+
+    <ItemGroup>
       <ProjectReference Include="..\mqonnor.Domain\mqonnor.Domain.csproj" />
       <ProjectReference Include="..\mqonnor.Application\mqonnor.Application.csproj" />
       <ProjectReference Include="..\mqonnor.Infra\mqonnor.Infra.csproj" />
+      <ProjectReference Include="..\mqonnor.API\mqonnor.API.csproj" />
     </ItemGroup>
 
 </Project>
