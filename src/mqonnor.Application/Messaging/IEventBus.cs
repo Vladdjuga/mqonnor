@@ -21,4 +21,10 @@ public interface IEventBus
     /// Intended for long-running workers that process events continuously.
     /// </summary>
     IAsyncEnumerable<Event> ConsumeAllAsync(CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Returns an async stream of all events as they arrive.
+    /// Intended for long-running workers that process events continuously.
+    /// </summary>
+    ValueTask<IEnumerable<Event>> ConsumeBatchAsync(int batch = 32, CancellationToken cancellationToken = default);
 }

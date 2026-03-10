@@ -1,10 +1,12 @@
 using mqonnor.API.DI;
+using mqonnor.API.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 
+builder.Services.AddSignalRHub();
 builder.Services.AddCommandHandlers();
 builder.Services.AddMediator();
 builder.Services.AddMappers();
@@ -21,5 +23,6 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.MapControllers();
+app.MapHub<EventHub>("/hubs/events");
 
 app.Run();

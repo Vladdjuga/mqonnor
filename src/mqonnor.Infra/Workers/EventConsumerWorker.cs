@@ -40,4 +40,9 @@ public sealed class EventConsumerWorker(
     {
         await repository.AddAsync(@event, cancellationToken);
     }
+
+    private async Task ProcessAllAsync(IEnumerable<Event> events, CancellationToken cancellationToken)
+    {
+        await repository.AddManyAsync(events, cancellationToken);
+    }
 }

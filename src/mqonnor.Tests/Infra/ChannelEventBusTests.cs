@@ -90,4 +90,41 @@ public class ChannelEventBusTests
 
         Assert.True(publishTask.IsCompleted);
     }
+
+    [Fact]
+    public async Task ConsumeBatchAsync_ReturnsUpToBatchSizeItems()
+    {
+        var bus = CreateBus();
+        var events = Enumerable.Range(0, 10).Select(_ => MakeEvent()).ToList();
+        foreach (var e in events)
+            await bus.PublishAsync(e);
+
+        var batch = (await bus.ConsumeBatchAsync(batch: 5)).ToList();
+
+        Assert.Equal(5, batch.Count);
+    }
+
+    [Fact]
+    public async Task ConsumeBatchAsync_ReturnsFewerItemsWhenLessThanBatchAvailable()
+    {
+        var bus = CreateBus();
+        var events = Enumerable.Range(0, 3).Select(_ => MakeEvent()).ToList();
+        foreach (var e in events)
+            await bus.PublishAsync(e);
+
+        var batch = (await bus.ConsumeBatchAsync(batch: 10)).ToList();
+
+        Assert.Equal(3, batch.Count);
+    }
+
+    [Fact]
+    public async Task ConsumeBatchAsync_CancelledToken_Throws()
+    {
+        var bus = CreateBus();
+        var cts = new CancellationTokenSource();
+        await cts.CancelAsync();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(
+            () => bus.ConsumeBatchAsync(cancellationToken: cts.Token).AsTask());
+    }
 }

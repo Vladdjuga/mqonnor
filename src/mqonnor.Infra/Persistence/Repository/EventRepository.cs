@@ -32,6 +32,9 @@ internal sealed class EventRepository(
     public Task AddAsync(Event @event, CancellationToken cancellationToken = default) =>
         collection.InsertOneAsync(toDocument.Map(@event), cancellationToken: cancellationToken);
 
+    public Task AddManyAsync(IEnumerable<Event> events, CancellationToken cancellationToken = default)=>
+        collection.InsertManyAsync(events.Select(toDocument.Map), cancellationToken: cancellationToken);
+
     public Task DeleteAsync(Guid id, CancellationToken cancellationToken = default) =>
         collection.DeleteOneAsync(e => e.Id == id, cancellationToken);
 }
